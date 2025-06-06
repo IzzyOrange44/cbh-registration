@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './contexts/AuthContext'
+import { AuthProvider } from './contexts'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { AppLoadingWrapper } from './components/AppLoadingWrapper'
 import { Header } from './components/layout/Header'
 
 // Import pages
@@ -23,143 +24,145 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          
-          <Route path="/" element={
-            <>
-              <Header />
-              <HomePage />
-            </>
-          } />
-          
-          {/* Protected routes */}
-          <Route path="/complete-profile" element={
-            <ProtectedRoute>
-              <CompleteProfilePage />
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <DashboardPage />
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/participants" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <ParticipantsPage />
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/participants/new" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <AddParticipantPage />
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/programs" element={
-            <>
-              <Header />
-              <main className="px-4 py-8">
-                <ProgramsPage />
-              </main>
-            </>
-          } />
-          
-          <Route path="/programs/:programId/register" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <QuickRegisterPage />
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/profile" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <ProfilePage />
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/registrations" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <div>My Registrations Page</div>
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          {/* Admin routes */}
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <AdminDashboard />
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/admin/programs" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <AdminProgramsPage />
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/admin/programs/new" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <AdminProgramForm />
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/admin/programs/:programId/edit" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <AdminProgramForm />
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/admin/programs/:programId/registrations" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <AdminRegistrationsPage />
-              </main>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/admin/registrations" element={
-            <ProtectedRoute>
-              <Header />
-              <main className="px-4 py-8">
-                <AdminRegistrationsPage />
-              </main>
-            </ProtectedRoute>
-          } />
-        </Routes>
+        <AppLoadingWrapper>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+            
+            <Route path="/" element={
+              <>
+                <Header />
+                <HomePage />
+              </>
+            } />
+            
+            {/* Protected routes */}
+            <Route path="/complete-profile" element={
+              <ProtectedRoute>
+                <CompleteProfilePage />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <DashboardPage />
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/participants" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <ParticipantsPage />
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/participants/new" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <AddParticipantPage />
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/programs" element={
+              <>
+                <Header />
+                <main className="px-4 py-8">
+                  <ProgramsPage />
+                </main>
+              </>
+            } />
+            
+            <Route path="/programs/:programId/register" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <QuickRegisterPage />
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <ProfilePage />
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/registrations" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <div>My Registrations Page</div>
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            {/* Admin routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <AdminDashboard />
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/programs" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <AdminProgramsPage />
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/programs/new" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <AdminProgramForm />
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/programs/:programId/edit" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <AdminProgramForm />
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/programs/:programId/registrations" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <AdminRegistrationsPage />
+                </main>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/admin/registrations" element={
+              <ProtectedRoute>
+                <Header />
+                <main className="px-4 py-8">
+                  <AdminRegistrationsPage />
+                </main>
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </AppLoadingWrapper>
       </Router>
     </AuthProvider>
   )
