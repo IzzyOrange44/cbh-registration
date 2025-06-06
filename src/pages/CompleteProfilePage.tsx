@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 export function CompleteProfilePage() {
-  const navigate = useNavigate()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -94,10 +92,10 @@ export function CompleteProfilePage() {
     setLoading(true)
 
     try {
-      // Step 1: Use upsert to update or create the profile
+      console.log('Starting profile completion for user:', user?.id)
+      
+      // Step 1: Update the profile with profile_completed = true
       const profileData = {
-        id: user?.id,
-        email: user?.email || userFormData.email,
         full_name: userFormData.full_name,
         phone: userFormData.phone,
         street_address: userFormData.street_address,
@@ -105,18 +103,24 @@ export function CompleteProfilePage() {
         province: userFormData.province,
         country: userFormData.country,
         postal_code: userFormData.postal_code,
-        profile_completed: true,
+        profile_completed: true, // THIS IS KEY!
         account_type: accountType,
         updated_at: new Date().toISOString()
       }
 
+      console.log('Updating profile with data:', profileData)
+
       const { error: profileError } = await supabase
         .from('profiles')
-        .upsert(profileData, {
-          onConflict: 'id'
-        })
+        .update(profileData)
+        .eq('id', user?.id)
 
-      if (profileError) throw profileError
+      if (profileError) {
+        console.error('Profile update error:', profileError)
+        throw profileError
+      }
+
+      console.log('Profile updated successfully')
 
       // Step 2: If they're a participant, create their participant record
       if (isParticipantSection && (accountType === 'participant' || accountType === 'both')) {
@@ -169,8 +173,10 @@ export function CompleteProfilePage() {
         }
       }
 
-      // Navigate to dashboard
-      navigate('/dashboard')
+      // Step 3: Redirect to dashboard with a page reload to refresh auth context
+      console.log('Profile completed successfully, redirecting to dashboard...')
+      window.location.href = '/dashboard'
+      
     } catch (err) {
       console.error('Profile update error:', err)
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while saving your profile'
