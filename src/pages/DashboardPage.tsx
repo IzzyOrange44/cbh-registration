@@ -8,10 +8,6 @@ interface Program {
   location: string
 }
 
-interface Profile {
-  full_name: string
-}
-
 export function DashboardPage() {
   const { user } = useAuth()
   const [programs, setPrograms] = useState<Program[]>([])
