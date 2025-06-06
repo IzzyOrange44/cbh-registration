@@ -9,10 +9,15 @@ import { LoginPage } from './pages/LoginPage'
 import { SignUpPage } from './pages/SignUpPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ParticipantsPage } from './pages/ParticipantsPage'
+import { AddParticipantPage } from './pages/AddParticipantPage'
 import { ProgramsPage } from './pages/ProgramsPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { CompleteProfilePage } from './pages/CompleteProfilePage'
 import { QuickRegisterPage } from './pages/QuickRegisterPage'
+import { AdminDashboard } from './pages/AdminDashboard'
+import { AdminProgramsPage } from './pages/AdminProgramsPage'
+import { AdminProgramForm } from './pages/AdminProgramForm'
+import { AdminRegistrationsPage } from './pages/AdminRegistrationsPage'
 
 function App() {
   return (
@@ -59,8 +64,7 @@ function App() {
             <ProtectedRoute>
               <Header />
               <main className="px-4 py-8">
-                {/* Add your AddParticipantPage component here */}
-                <div>Add Participant Page</div>
+                <AddParticipantPage />
               </main>
             </ProtectedRoute>
           } />
@@ -106,7 +110,52 @@ function App() {
             <ProtectedRoute>
               <Header />
               <main className="px-4 py-8">
-                <div>Admin Dashboard</div>
+                <AdminDashboard />
+              </main>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/programs" element={
+            <ProtectedRoute>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminProgramsPage />
+              </main>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/programs/new" element={
+            <ProtectedRoute>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminProgramForm />
+              </main>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/programs/:programId/edit" element={
+            <ProtectedRoute>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminProgramForm />
+              </main>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/programs/:programId/registrations" element={
+            <ProtectedRoute>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminRegistrationsPage />
+              </main>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin/registrations" element={
+            <ProtectedRoute>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminRegistrationsPage />
               </main>
             </ProtectedRoute>
           } />
