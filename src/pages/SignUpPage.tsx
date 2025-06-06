@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../lib/supabase'
 
 export function SignUpPage() {
   const navigate = useNavigate()
@@ -29,19 +28,14 @@ export function SignUpPage() {
 
     setLoading(true)
 
-    const { error: signUpError } = await signUp(email, password)
+    // Pass account type to the signUp function
+    const { error: signUpError } = await signUp(email, password, accountType)
     
     if (signUpError) {
       setError(signUpError.message)
       setLoading(false)
     } else {
-      // Update account type in profile
-      await supabase
-        .from('profiles')
-        .update({ account_type: accountType })
-        .eq('email', email)
-      
-      navigate('/dashboard')
+      navigate('/complete-profile')
     }
   }
 

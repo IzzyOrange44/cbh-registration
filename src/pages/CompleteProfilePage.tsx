@@ -14,7 +14,7 @@ export function CompleteProfilePage() {
   // Guardian/User info (everyone needs this)
   const [userFormData, setUserFormData] = useState({
     full_name: '',
-    email: '',
+    email: user?.email || '',
     phone: '',
     street_address: '',
     city: '',
@@ -55,10 +55,12 @@ export function CompleteProfilePage() {
   useEffect(() => {
     // Get the account type from the profile
     const getAccountType = async () => {
+      if (!user) return
+
       const { data } = await supabase
         .from('profiles')
         .select('account_type')
-        .eq('id', user?.id)
+        .eq('id', user.id)
         .single()
       
       if (data?.account_type) {
@@ -68,9 +70,7 @@ export function CompleteProfilePage() {
       }
     }
     
-    if (user) {
-      getAccountType()
-    }
+    getAccountType()
   }, [user])
 
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -94,40 +94,86 @@ export function CompleteProfilePage() {
     setLoading(true)
 
     try {
-      // Step 1: Update user profile
+      // Step 1: Use upsert to update or create the profile
+      const profileData = {
+        id: user?.id,
+        email: user?.email || userFormData.email,
+        full_name: userFormData.full_name,
+        phone: userFormData.phone,
+        street_address: userFormData.street_address,
+        city: userFormData.city,
+        province: userFormData.province,
+        country: userFormData.country,
+        postal_code: userFormData.postal_code,
+        profile_completed: true,
+        account_type: accountType,
+        updated_at: new Date().toISOString()
+      }
+
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          ...userFormData,
-          profile_completed: true,
-          updated_at: new Date().toISOString()
+        .upsert(profileData, {
+          onConflict: 'id'
         })
-        .eq('id', user?.id)
 
       if (profileError) throw profileError
 
       // Step 2: If they're a participant, create their participant record
       if (isParticipantSection && (accountType === 'participant' || accountType === 'both')) {
-        const { error: participantError } = await supabase
+        // Check if account holder participant record already exists
+        const { data: existingParticipant } = await supabase
           .from('participants')
-          .insert({
-            user_id: user?.id,
-            ...participantFormData,
-            first_name: participantFormData.first_name || userFormData.full_name.split(' ')[0],
-            last_name: participantFormData.last_name || userFormData.full_name.split(' ').slice(1).join(' '),
-            email: participantFormData.email || user?.email,
-            phone: participantFormData.phone || userFormData.phone,
-            first_year_blind_hockey: participantFormData.first_year_blind_hockey ? parseInt(participantFormData.first_year_blind_hockey) : null,
-          })
+          .select('id')
+          .eq('user_id', user?.id)
+          .eq('is_account_holder', true)
+          .single()
 
-        if (participantError) throw participantError
+        const participantData = {
+          user_id: user?.id,
+          first_name: participantFormData.first_name || userFormData.full_name.split(' ')[0],
+          last_name: participantFormData.last_name || userFormData.full_name.split(' ').slice(1).join(' '),
+          email: participantFormData.email || user?.email,
+          phone: participantFormData.phone || userFormData.phone,
+          gender: participantFormData.gender,
+          date_of_birth: participantFormData.date_of_birth,
+          allergies: participantFormData.allergies,
+          dietary_restrictions: participantFormData.dietary_restrictions,
+          position: participantFormData.position,
+          emergency_contact_name: participantFormData.emergency_contact_name,
+          emergency_contact_relationship: participantFormData.emergency_contact_relationship,
+          emergency_contact_phone: participantFormData.emergency_contact_phone,
+          emergency_contact_email: participantFormData.emergency_contact_email,
+          visual_classification: participantFormData.visual_classification,
+          visual_condition: participantFormData.visual_condition,
+          played_sighted_hockey: participantFormData.played_sighted_hockey,
+          first_year_blind_hockey: participantFormData.first_year_blind_hockey ? parseInt(participantFormData.first_year_blind_hockey) : null,
+          how_heard_about: participantFormData.how_heard_about,
+          is_account_holder: true // Mark this as the account holder's participant record
+        }
+
+        if (existingParticipant) {
+          // Update existing participant
+          const { error: participantError } = await supabase
+            .from('participants')
+            .update(participantData)
+            .eq('id', existingParticipant.id)
+
+          if (participantError) throw participantError
+        } else {
+          // Insert new participant
+          const { error: participantError } = await supabase
+            .from('participants')
+            .insert(participantData)
+
+          if (participantError) throw participantError
+        }
       }
 
       // Navigate to dashboard
       navigate('/dashboard')
     } catch (err) {
       console.error('Profile update error:', err)
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred'
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while saving your profile'
       setError(errorMessage)
     } finally {
       setLoading(false)

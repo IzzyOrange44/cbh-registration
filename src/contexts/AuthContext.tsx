@@ -6,7 +6,7 @@ type AuthContextType = {
   user: User | null
   session: Session | null
   loading: boolean
-  signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>
+  signUp: (email: string, password: string, accountType?: string) => Promise<{ error: AuthError | null }>
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<{ error: AuthError | null }>
   profileCompleted: boolean
@@ -20,13 +20,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [profileCompleted, setProfileCompleted] = useState(false)
 
+  const checkProfileStatus = async (userId: string, userEmail?: string) => {
+    try {
+      // First check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      
+      // Only create profile if it doesn't exist
+      if (!existingProfile) {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: userEmail || user?.email || '',
+            profile_completed: false
+            // Don't set account_type here - let SignUpPage handle it
+          })
+        
+        if (insertError && insertError.code !== '23505') { // Ignore duplicate key errors
+          console.error('Error creating profile:', insertError)
+        }
+      }
+      
+      // Now fetch the profile to check completion status
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('profile_completed')
+        .eq('id', userId)
+        .single()
+      
+      if (!error && data) {
+        setProfileCompleted(data.profile_completed || false)
+      } else {
+        setProfileCompleted(false)
+      }
+    } catch (err) {
+      console.error('Unexpected error in checkProfileStatus:', err)
+      setProfileCompleted(false)
+    }
+  }
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
-        checkProfileStatus(session.user.id)
+        checkProfileStatus(session.user.id, session.user.email)
       }
       setLoading(false)
     })
@@ -36,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
-        checkProfileStatus(session.user.id)
+        checkProfileStatus(session.user.id, session.user.email)
       } else {
         setProfileCompleted(false)
       }
@@ -45,70 +88,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
-  const checkProfileStatus = async (userId: string, userEmail?: string) => {
-  try {
-    // Use upsert to avoid conflicts
-    const { error: upsertError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: userId,
-        email: userEmail || user?.email || '',
-        profile_completed: false,
-        account_type: 'guardian'
-      }, {
-        onConflict: 'id',
-        ignoreDuplicates: true
-      })
-    
-    if (upsertError) {
-      console.error('Error upserting profile:', upsertError)
-    }
-    
-    // Now fetch the profile
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('profile_completed')
-      .eq('id', userId)
-      .single()
-    
-    if (!error && data) {
-      setProfileCompleted(data.profile_completed || false)
-    } else {
-      setProfileCompleted(false)
-    }
-  } catch (err) {
-    console.error('Unexpected error in checkProfileStatus:', err)
-    setProfileCompleted(false)
-  }
-}
-
-// Update the useEffect to pass email
-useEffect(() => {
-  // Get initial session
-  supabase.auth.getSession().then(({ data: { session } }) => {
-    setSession(session)
-    setUser(session?.user ?? null)
-    if (session?.user) {
-      checkProfileStatus(session.user.id, session.user.email)
-    }
-    setLoading(false)
-  })
-
-  // Listen for auth changes
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-    setSession(session)
-    setUser(session?.user ?? null)
-    if (session?.user) {
-      checkProfileStatus(session.user.id, session.user.email)
-    } else {
-      setProfileCompleted(false)
-    }
-  })
-
-  return () => subscription.unsubscribe()
-}, [])
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, accountType?: string) => {
     const result = await supabase.auth.signUp({ email, password })
+    
+    // If signup successful and we have an account type, update the profile
+    if (!result.error && result.data.user && accountType) {
+      await supabase
+        .from('profiles')
+        .update({ account_type: accountType })
+        .eq('id', result.data.user.id)
+    }
+    
     return { error: result.error }
   }
 

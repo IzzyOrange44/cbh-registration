@@ -95,6 +95,7 @@ export function AddParticipantPage() {
           user_id: user?.id,
           ...formData,
           first_year_blind_hockey: formData.first_year_blind_hockey ? parseInt(formData.first_year_blind_hockey) : null,
+          is_account_holder: false // This is a dependent, not the account holder
         })
 
       if (insertError) throw insertError
