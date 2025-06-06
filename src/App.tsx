@@ -1,5 +1,6 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './contexts'
+
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './contexts'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AppLoadingWrapper } from './components/AppLoadingWrapper'
 import { Header } from './components/layout/Header'
@@ -21,6 +22,8 @@ import { AdminProgramForm } from './pages/AdminProgramForm'
 import { AdminRegistrationsPage } from './pages/AdminRegistrationsPage'
 
 function App() {
+  const { profileCompleted } = useAuth()
+
   return (
     <AuthProvider>
       <Router>
@@ -29,21 +32,26 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignUpPage />} />
-            
+
             <Route path="/" element={
               <>
                 <Header />
                 <HomePage />
               </>
             } />
-            
-            {/* Protected routes */}
+
+            {/* Special handling for profile completion */}
             <Route path="/complete-profile" element={
-              <ProtectedRoute>
-                <CompleteProfilePage />
-              </ProtectedRoute>
+              profileCompleted ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <ProtectedRoute>
+                  <CompleteProfilePage />
+                </ProtectedRoute>
+              )
             } />
-            
+
+            {/* Protected routes */}
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Header />
@@ -52,7 +60,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/participants" element={
               <ProtectedRoute>
                 <Header />
@@ -61,7 +69,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/participants/new" element={
               <ProtectedRoute>
                 <Header />
@@ -70,7 +78,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/programs" element={
               <>
                 <Header />
@@ -79,7 +87,7 @@ function App() {
                 </main>
               </>
             } />
-            
+
             <Route path="/programs/:programId/register" element={
               <ProtectedRoute>
                 <Header />
@@ -88,7 +96,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/profile" element={
               <ProtectedRoute>
                 <Header />
@@ -97,7 +105,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/registrations" element={
               <ProtectedRoute>
                 <Header />
@@ -106,7 +114,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             {/* Admin routes */}
             <Route path="/admin" element={
               <ProtectedRoute>
@@ -116,7 +124,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/admin/programs" element={
               <ProtectedRoute>
                 <Header />
@@ -125,7 +133,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/admin/programs/new" element={
               <ProtectedRoute>
                 <Header />
@@ -134,7 +142,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/admin/programs/:programId/edit" element={
               <ProtectedRoute>
                 <Header />
@@ -143,7 +151,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/admin/programs/:programId/registrations" element={
               <ProtectedRoute>
                 <Header />
@@ -152,7 +160,7 @@ function App() {
                 </main>
               </ProtectedRoute>
             } />
-            
+
             <Route path="/admin/registrations" element={
               <ProtectedRoute>
                 <Header />

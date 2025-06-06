@@ -1,11 +1,9 @@
 import { useAuth } from '../contexts'
 
 export function AppLoadingWrapper({ children }: { children: React.ReactNode }) {
-  const { loading } = useAuth()
+  const { ready } = useAuth()
 
-  console.log('AppLoadingWrapper - loading state:', loading)
-
-  if (loading) {
+  if (!ready) {
     return (
       <div className="flex justify-center items-center h-screen bg-gray-100">
         <div className="text-center">
