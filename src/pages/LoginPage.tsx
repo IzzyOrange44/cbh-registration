@@ -5,7 +5,7 @@ import { useAuth } from '../contexts'
 export function LoginPage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { signIn, user, profileCompleted } = useAuth()
+  const { signIn, user} = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
