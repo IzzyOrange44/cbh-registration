@@ -6,24 +6,27 @@ import { supabase } from '../../lib/supabase'
 export function Header() {
   const { user, signOut } = useAuth()
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userRole, setUserRole] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   
   useEffect(() => {
     if (user) {
-      checkAdminStatus()
+      checkUserStatus()  // Changed from checkAdminStatus
     } else {
       setIsAdmin(false)
+      setUserRole('')
     }
   }, [user])
   
-  const checkAdminStatus = async () => {
+  const checkUserStatus = async () => {
     const { data } = await supabase
-      .from('profiles')
-      .select('is_admin')
+      .from('user_profiles')  // Changed from 'profiles'
+      .select('role')         // Changed from 'is_admin'
       .eq('id', user?.id)
       .single()
     
-    setIsAdmin(data?.is_admin || false)
+    setUserRole(data?.role || '')
+    setIsAdmin(data?.role === 'admin')  // Check if role is admin
   }
   
   return (
@@ -46,9 +49,11 @@ export function Header() {
                 <Link to="/dashboard" className="hover:text-red-400 transition-colors">
                   Dashboard
                 </Link>
-                <Link to="/participants" className="hover:text-red-400 transition-colors">
-                  Participants
-                </Link>
+                {userRole === 'parent_guardian' && (
+                  <Link to="/participants" className="hover:text-red-400 transition-colors">
+                    Participants
+                  </Link>
+                )}
                 <Link to="/programs" className="hover:text-red-400 transition-colors">
                   Programs
                 </Link>
@@ -111,13 +116,15 @@ export function Header() {
                 >
                   Dashboard
                 </Link>
-                <Link 
-                  to="/participants" 
-                  className="block px-3 py-2 rounded hover:bg-gray-800"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Participants
-                </Link>
+                {userRole === 'parent_guardian' && (
+                  <Link 
+                    to="/participants" 
+                    className="block px-3 py-2 rounded hover:bg-gray-800"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Participants
+                  </Link>
+                )}
                 <Link 
                   to="/programs" 
                   className="block px-3 py-2 rounded hover:bg-gray-800"

@@ -1,11 +1,25 @@
-
+// components/ProtectedRoute.tsx
+import { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import { useAuth } from '../contexts'
-import { useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+interface ProtectedRouteProps {
+  children: ReactNode
+  requiresProfileCompletion?: boolean
+  allowedRoles?: string[]
+}
+
+export function ProtectedRoute({ 
+  children, 
+  requiresProfileCompletion = false, 
+  allowedRoles = []
+}: ProtectedRouteProps) {
   const { user, loading, profileCompleted, ready } = useAuth()
   const location = useLocation()
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [roleLoading, setRoleLoading] = useState(true)
 
   useEffect(() => {
     console.log('ProtectedRoute - Auth State:', {
@@ -13,11 +27,51 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
       loading,
       profileCompleted,
       ready,
-      currentPath: location.pathname
+      currentPath: location.pathname,
+      requiresProfileCompletion,
+      allowedRoles,
+      userRole
     })
-  }, [user, loading, profileCompleted, ready, location.pathname])
+  }, [user, loading, profileCompleted, ready, location.pathname, requiresProfileCompletion, allowedRoles, userRole])
 
-  if (!ready || profileCompleted === null) {
+  // Fetch user role from database when user is available
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!user?.id) {
+        setRoleLoading(false)
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (!error && data) {
+          setUserRole(data.role)
+        } else {
+          console.error('Error fetching user role:', error)
+          setUserRole(null)
+        }
+      } catch (err) {
+        console.error('Error fetching user role:', err)
+        setUserRole(null)
+      } finally {
+        setRoleLoading(false)
+      }
+    }
+
+    if (user && ready) {
+      fetchUserRole()
+    } else {
+      setRoleLoading(false)
+    }
+  }, [user, ready])
+
+  // Show loading while auth is initializing OR while fetching role
+  if (!ready || profileCompleted === null || roleLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="text-center">
@@ -28,17 +82,64 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
+  // Redirect to login if not authenticated
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (!profileCompleted && location.pathname !== '/complete-profile') {
-    return <Navigate to="/complete-profile" replace />
+  // Check role-based access using database role
+  if (allowedRoles.length > 0) {
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      console.log(`Access denied. User role: ${userRole}, Required roles:`, allowedRoles)
+      return <Navigate to="/dashboard" replace />
+    }
   }
 
-  if (profileCompleted && location.pathname === '/complete-profile') {
+  // Check profile completion requirement
+  if (requiresProfileCompletion && !profileCompleted) {
+    console.log('Profile completion required, redirecting to dashboard')
     return <Navigate to="/dashboard" replace />
   }
 
   return <>{children}</>
+}
+
+// Specific route protection components for cleaner usage
+
+export function AuthRequired({ children }: { children: ReactNode }) {
+  return (
+    <ProtectedRoute>
+      {children}
+    </ProtectedRoute>
+  )
+}
+
+export function ProfileRequired({ children }: { children: ReactNode }) {
+  return (
+    <ProtectedRoute requiresProfileCompletion={true}>
+      {children}
+    </ProtectedRoute>
+  )
+}
+
+export function ParentGuardianRequired({ children }: { children: ReactNode }) {
+  return (
+    <ProtectedRoute 
+      requiresProfileCompletion={true} 
+      allowedRoles={['parent_guardian']}
+    >
+      {children}
+    </ProtectedRoute>
+  )
+}
+
+export function AdminRequired({ children }: { children: ReactNode }) {
+  return (
+    <ProtectedRoute 
+      requiresProfileCompletion={true} 
+      allowedRoles={['admin']}
+    >
+      {children}
+    </ProtectedRoute>
+  )
 }

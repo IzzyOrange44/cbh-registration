@@ -1,7 +1,10 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from './contexts'
-import { ProtectedRoute } from './components/ProtectedRoute'
+import { 
+  AuthRequired, 
+  ProfileRequired, 
+  ParentGuardianRequired, 
+  AdminRequired 
+} from './components/ProtectedRoute'
 import { AppLoadingWrapper } from './components/AppLoadingWrapper'
 import { Header } from './components/layout/Header'
 
@@ -14,7 +17,6 @@ import { ParticipantsPage } from './pages/ParticipantsPage'
 import { AddParticipantPage } from './pages/AddParticipantPage'
 import { ProgramsPage } from './pages/ProgramsPage'
 import { ProfilePage } from './pages/ProfilePage'
-import { CompleteProfilePage } from './pages/CompleteProfilePage'
 import { QuickRegisterPage } from './pages/QuickRegisterPage'
 import { AdminDashboard } from './pages/AdminDashboard'
 import { AdminProgramsPage } from './pages/AdminProgramsPage'
@@ -22,156 +24,184 @@ import { AdminProgramForm } from './pages/AdminProgramForm'
 import { AdminRegistrationsPage } from './pages/AdminRegistrationsPage'
 
 function App() {
-  const { profileCompleted } = useAuth()
-
   return (
-    <AuthProvider>
-      <Router>
-        <AppLoadingWrapper>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
+    <Router>
+      <Routes>
+        {/* Public Routes (No Auth Required - Load Instantly) */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/programs" element={
+          <>
+            <Header />
+            <main className="px-4 py-8">
+              <ProgramsPage />
+            </main>
+          </>
+        } />
 
-            <Route path="/" element={
-              <>
-                <HomePage />
-              </>
-            } />
+        {/* Protected Routes (Auth Required - Use Loading Wrapper) */}
+        <Route path="/dashboard" element={
+          <AppLoadingWrapper>
+            <AuthRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <DashboardPage />
+              </main>
+            </AuthRequired>
+          </AppLoadingWrapper>
+        } />
 
-            {/* Special handling for profile completion */}
-            <Route path="/complete-profile" element={
-              profileCompleted ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <ProtectedRoute>
-                  <CompleteProfilePage />
-                </ProtectedRoute>
-              )
-            } />
+        {/* Participant Management Routes */}
+        <Route path="/participants" element={
+          <AppLoadingWrapper>
+            <ParentGuardianRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <ParticipantsPage />
+              </main>
+            </ParentGuardianRequired>
+          </AppLoadingWrapper>
+        } />
 
-            {/* Protected routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <DashboardPage />
-                </main>
-              </ProtectedRoute>
-            } />
+        <Route path="/participants/new" element={
+          <AppLoadingWrapper>
+            <ParentGuardianRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <AddParticipantPage />
+              </main>
+            </ParentGuardianRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/participants" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <ParticipantsPage />
-                </main>
-              </ProtectedRoute>
-            } />
+        <Route path="/participants/:id/edit" element={
+          <AppLoadingWrapper>
+            <ParentGuardianRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <AddParticipantPage />
+              </main>
+            </ParentGuardianRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/participants/new" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <AddParticipantPage />
-                </main>
-              </ProtectedRoute>
-            } />
+        <Route path="/participants/:id/register" element={
+          <AppLoadingWrapper>
+            <ParentGuardianRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <QuickRegisterPage />
+              </main>
+            </ParentGuardianRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/programs" element={
-              <>
-                <Header />
-                <main className="px-4 py-8">
-                  <ProgramsPage />
-                </main>
-              </>
-            } />
+        {/* Profile Required Routes */}
+        <Route path="/programs/:programId/register" element={
+          <AppLoadingWrapper>
+            <ProfileRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <QuickRegisterPage />
+              </main>
+            </ProfileRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/programs/:programId/register" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <QuickRegisterPage />
-                </main>
-              </ProtectedRoute>
-            } />
+        <Route path="/profile" element={
+          <AppLoadingWrapper>
+            <ProfileRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <ProfilePage />
+              </main>
+            </ProfileRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <ProfilePage />
-                </main>
-              </ProtectedRoute>
-            } />
+        <Route path="/registrations" element={
+          <AppLoadingWrapper>
+            <ProfileRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <div>My Registrations Page</div>
+              </main>
+            </ProfileRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/registrations" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <div>My Registrations Page</div>
-                </main>
-              </ProtectedRoute>
-            } />
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+          <AppLoadingWrapper>
+            <AdminRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminDashboard />
+              </main>
+            </AdminRequired>
+          </AppLoadingWrapper>
+        } />
 
-            {/* Admin routes */}
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <AdminDashboard />
-                </main>
-              </ProtectedRoute>
-            } />
+        <Route path="/admin/programs" element={
+          <AppLoadingWrapper>
+            <AdminRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminProgramsPage />
+              </main>
+            </AdminRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/admin/programs" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <AdminProgramsPage />
-                </main>
-              </ProtectedRoute>
-            } />
+        <Route path="/admin/programs/new" element={
+          <AppLoadingWrapper>
+            <AdminRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminProgramForm />
+              </main>
+            </AdminRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/admin/programs/new" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <AdminProgramForm />
-                </main>
-              </ProtectedRoute>
-            } />
+        <Route path="/admin/programs/:programId/edit" element={
+          <AppLoadingWrapper>
+            <AdminRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminProgramForm />
+              </main>
+            </AdminRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/admin/programs/:programId/edit" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <AdminProgramForm />
-                </main>
-              </ProtectedRoute>
-            } />
+        <Route path="/admin/programs/:programId/registrations" element={
+          <AppLoadingWrapper>
+            <AdminRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminRegistrationsPage />
+              </main>
+            </AdminRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/admin/programs/:programId/registrations" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <AdminRegistrationsPage />
-                </main>
-              </ProtectedRoute>
-            } />
+        <Route path="/admin/registrations" element={
+          <AppLoadingWrapper>
+            <AdminRequired>
+              <Header />
+              <main className="px-4 py-8">
+                <AdminRegistrationsPage />
+              </main>
+            </AdminRequired>
+          </AppLoadingWrapper>
+        } />
 
-            <Route path="/admin/registrations" element={
-              <ProtectedRoute>
-                <Header />
-                <main className="px-4 py-8">
-                  <AdminRegistrationsPage />
-                </main>
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </AppLoadingWrapper>
-      </Router>
-    </AuthProvider>
+        {/* Catch-all redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   )
 }
 
